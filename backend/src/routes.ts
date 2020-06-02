@@ -1,8 +1,10 @@
 import express from 'express';
 
 import knex from './database/connection';
+import PointsController from './controllers/PointsController';
 
 const routes = express.Router();
+const pointesController = new PointsController();
 
 routes.get('/items', async (request, response) => {
   const items = await knex('items').select('*');
@@ -15,25 +17,6 @@ routes.get('/items', async (request, response) => {
   return response.json(serializedItems);
 });
 
-routes.post('/points', async(request, response) => {
-  const { name, email, whatsapp, latitude, longitude, city, uf, items } = request.body;
-
-  const trx = await knex.transaction();
-
-  const insertedIds = await trx('points').insert({
-    name, email, whatsapp, latitude, longitude, city, uf, image: 'image-fake',
-  });
-
-  const point_id = insertedIds[0]
-
-  const pointItems = items.map((item_id: number) => ({
-    item_id,
-    point_id,
-  }));
-
-  await trx('point_items').insert(pointItems)
-
-  response.json({ success: true });
-});
+routes.post('/points', pointesController.create);
 
 export default routes;
