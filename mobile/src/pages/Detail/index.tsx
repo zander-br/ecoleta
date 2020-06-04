@@ -4,7 +4,7 @@ import { Feather as Icon, FontAwesome } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { RectButton } from 'react-native-gesture-handler'
 
-const Points = () => {
+const Detail = () => {
   const navigation = useNavigation();
 
   function handleNavigateBack() {
@@ -117,4 +117,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Points;
+export default Detail;
