@@ -5,6 +5,7 @@ import { Map, TileLayer, Marker } from 'react-leaflet';
 import axios from 'axios';
 import { LeafletMouseEvent } from 'leaflet';
 
+import Dropzone from '../../components/Dropzone';
 import api from '../../services/api';
 
 import './styles.css';
@@ -39,6 +40,7 @@ const CreatePoint = () => {
   const [selectedCity, setSelectedCity] = useState('0');
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
   const [selectedPosition, setSelectedPosition] = useState<[number, number]>([0, 0]);
+  const [selectedFile, setSelectedFile] = useState<File>();
 
   const history = useHistory();
 
@@ -65,15 +67,15 @@ const CreatePoint = () => {
   }, []);
 
   useEffect(() => {
-    if(selectedUf === '0') return;
+    if (selectedUf === '0') return;
 
     axios
       .get<IBGECityResponse[]>(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${selectedUf}/municipios?orderBy=nome`)
       .then(response => {
-      const cityNames = response.data.map(city => city.nome);
+        const cityNames = response.data.map(city => city.nome);
 
-      setCities(cityNames);
-    });
+        setCities(cityNames);
+      });
   }, [selectedUf]);
 
   function handleSelectUf(event: ChangeEvent<HTMLSelectElement>) {
@@ -102,11 +104,11 @@ const CreatePoint = () => {
   function handleSelectItem(id: number) {
     const alreadySelected = selectedItems.findIndex(item => item === id);
 
-    if(alreadySelected >= 0) {
+    if (alreadySelected >= 0) {
       const filteredItems = selectedItems.filter(item => item !== id);
       setSelectedItems(filteredItems);
     } else {
-      setSelectedItems([ ...selectedItems, id ]);
+      setSelectedItems([...selectedItems, id]);
     }
   }
 
@@ -119,16 +121,20 @@ const CreatePoint = () => {
     const [latitude, longitude] = selectedPosition;
     const items = selectedItems;
 
-    const data = {
-      name,
-      email,
-      whatsapp,
-      uf,
-      city,
-      latitude,
-      longitude,
-      items,
-    };
+    const data = new FormData();
+
+    data.append('name', name);
+    data.append('email', email);
+    data.append('whatsapp', whatsapp);
+    data.append('uf', uf);
+    data.append('city', city);
+    data.append('latitude', String(latitude));
+    data.append('longitude', String(longitude));
+    data.append('items', items.join(','));
+
+    if(selectedFile) {
+      data.append('image', selectedFile);
+    }
 
     await api.post('points', data);
 
@@ -146,9 +152,10 @@ const CreatePoint = () => {
         </Link>
       </header>
       <form onSubmit={handleSubmit}>
-        <h1>
-          Cadastro do<br /> ponto de coleta
-          </h1>
+        <h1>Cadastro do<br /> ponto de coleta</h1>
+
+        <Dropzone onFileUploaded={setSelectedFile} />
+
         <fieldset>
           <legend>
             <h2>Dados</h2>
@@ -204,10 +211,10 @@ const CreatePoint = () => {
           <div className="field-group">
             <div className="field">
               <label htmlFor="uf">Estado (UF)</label>
-              <select 
-                name="uf" 
-                id="uf" 
-                value={selectedUf} 
+              <select
+                name="uf"
+                id="uf"
+                value={selectedUf}
                 onChange={handleSelectUf}
               >
                 <option value="0">Selecione uma UF</option>
@@ -218,8 +225,8 @@ const CreatePoint = () => {
             </div>
             <div className="field">
               <label htmlFor="city">Cidade</label>
-              <select 
-                name="city" 
+              <select
+                name="city"
                 id="city"
                 value={selectedCity}
                 onChange={handleSelectCity}
@@ -241,14 +248,14 @@ const CreatePoint = () => {
 
           <ul className="items-grid">
             {items.map(item => (
-            <li 
-              key={item.id} 
-              onClick={() => handleSelectItem(item.id)}
-              className={selectedItems.includes(item.id) ? 'selected' : ''}
-            >
-              <img src={item.image_url} alt={item.title} />
-              <span>{item.title}</span>
-            </li>
+              <li
+                key={item.id}
+                onClick={() => handleSelectItem(item.id)}
+                className={selectedItems.includes(item.id) ? 'selected' : ''}
+              >
+                <img src={item.image_url} alt={item.title} />
+                <span>{item.title}</span>
+              </li>
             ))}
           </ul>
         </fieldset>
