@@ -29,6 +29,8 @@ routes.post(
       city: Joi.string().required(),
       items: Joi.string().required(),
     }),
+  }, {
+    abortEarly: false
   }), 
   pointsController.create);
 routes.get('/points', pointsController.index);
